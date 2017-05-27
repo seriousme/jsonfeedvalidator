@@ -40,7 +40,7 @@ var schema={}
 
 // schemastore has problems with its certificate, so we go via the backdoor
 // var feedSchemaRequest = fetch('http://json.schemastore.org/feed')
-var feedSchemaRequest = fetch('https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/feed.json')
+var feedSchemaRequest = fetch('https://schemastore.azurewebsites.net/schemas/json/feed.json')
   .then(function(data){ return data.json()})
 // json-schema.org also has problems with its certificate, so we fetch it locally
 //var coreSchemaRequest = fetch('https://json-schema.org/draft-04/schema#')
