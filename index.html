@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<head>
+    <title>JSON Feed validator</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/png" href="https://jsonfeed.org/graphics/icon.png" />
+    <style type="text/css" media="all">
+        @import "https://jsonfeed.org/styles/styleSheet.css";
+    </style>
+</head>
+
+<body>
+    <div id="banner">
+        <div class="title">
+            <a href="http://jsonfeed.org">JSONfeed.org</a>
+        </div>
+    </div>
+
+    <div id="content">
+      <h1>JSON Feed validator</h1>
+      <p>Paste data from a JSON feed below and hit validate. This will try to validate the feed data based on the
+        <a href="http://json.schemastore.org/feed">JSON feed schema hosted at schemastore.org</a></p>
+
+        <textarea id="feedData" rows="15" cols="80" placeholder="paste JSON feed data here"></textarea>
+        <button id="validate" disabled="true" >Validate</button>
+        <button id="clear">Clear</button>
+
+        <p id="result"></p>
+
+    </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/5.1.4/ajv.min.js"></script>
+<script>
+var validateButton= document.getElementById('validate');
+var clearButton= document.getElementById('clear');
+var feedData= document.getElementById('feedData');
+var resultElement= document.getElementById('result');
+var schema={}
+
+
+var feedSchemaRequest = fetch('http://json.schemastore.org/feed')
+  .then(function(data){ return data.json()})
+var coreSchemaRequest = fetch('http://json-schema.org/draft-04/schema#')
+    .then(function(data){ return data.json()})
+
+Promise.all([feedSchemaRequest,coreSchemaRequest]).then(function(values){
+    schema.feed = values[0];
+    schema.core = values[1];
+    return schema;
+}).then( function(){
+  console.log(schema);
+  validateButton.disabled = false;
+})
+
+
+function formatErrors(errors){
+  return errors.map(function(e){
+    return( e.dataPath + ' ' + e.message)
+  })
+}
+function doValidation(){
+  console.log("validating");
+  var ajv = new Ajv({ allErrors:true });
+  ajv.addMetaSchema(schema.core);
+  var validator = ajv.compile(schema.feed)
+  try {
+    var feedJson = JSON.parse(feedData.value)
+  }
+  catch (err) {
+    resultElement.innerHTML = "Input contains invalid JSON"
+    return
+  }
+
+  var valid = validator(feedJson);
+  if (!valid) {
+    console.log(validator.errors)
+      resultElement.innerHTML = "Input contains errors: <br>" + formatErrors(validator.errors).join('<br>')
+  } else {
+    resultElement.innerHTML = "Congratulations: validation found no errors !";
+  }
+}
+
+function resetData(){
+  console.log("resetting inputs");
+  feedData.value = "";
+  resultElement.innerHTML = "";
+}
+
+validateButton.onclick = doValidation;
+clearButton.onclick = resetData;
+
+</script>
+
+
+</html>
